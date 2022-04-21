@@ -47,3 +47,4 @@ venv.bak/
 .idea/
 data/*
 outputs/
+logs/

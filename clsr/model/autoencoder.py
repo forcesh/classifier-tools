@@ -1,7 +1,7 @@
 import torch.nn as nn
 
-from clsr.model.encoder import Encoder
 from clsr.model.decoder import Decoder
+from clsr.model.encoder import Encoder
 
 
 class AutoEncoder(nn.Module):
@@ -11,6 +11,8 @@ class AutoEncoder(nn.Module):
         self.decoder = Decoder(hidden_dim, input_dim)
 
     def forward(self, input):
-        x = self.encoder(input)
+        x = input.view(input.size(0), -1)
+        x = self.encoder(x)
         x = self.decoder(x)
+        x = x.view(input.size())
         return x

@@ -1,26 +1,25 @@
-import os
 import copy
+import math
+import os
 import time
 
-from omegaconf import DictConfig
 import torch
-from torch.utils.data import DataLoader
 import torchvision
 import torchvision.transforms as transforms
+from omegaconf import DictConfig
+from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from clsr.optimizer.builder import build_optimizer
 from clsr.loss.builder import build_loss
 from clsr.model.builder import build_model
+from clsr.optimizer.builder import build_optimizer
 from clsr.settings import PROJECT_ROOT
 
 
 class SimpleRunner:
-    def __init__(self,
-                 cfg: DictConfig,
-                 mode: int = 0):
+    def __init__(self, cfg: DictConfig, mode: int = 0):
         self.cfg = cfg
-        self.mode = mode # 0 - train_val, 1 - test
+        self.mode = mode  # 0 - train_val, 1 - test
         self.device = cfg.runner.device
 
         self._init_model()
@@ -34,49 +33,58 @@ class SimpleRunner:
 
     def _init_model(self):
         kwargs = {}
-        if hasattr(self.cfg.model, "input_dim"):
-            kwargs["input_dim"] = self.cfg.model.input_dim
-        if hasattr(self.cfg.model, "hidden_dim"):
-            kwargs["hidden_dim"] = self.cfg.model.hidden_dim
-        if hasattr(self.cfg.model, "num_classes"):
-            kwargs["num_classes"] = self.cfg.model.num_classes
-        if hasattr(self.cfg.model, "encoder_weights"):
-            if self.cfg.model.encoder_weights == "None":
+        if hasattr(self.cfg.model, 'input_dim'):
+            kwargs['input_dim'] = self.cfg.model.input_dim
+        if hasattr(self.cfg.model, 'hidden_dim'):
+            kwargs['hidden_dim'] = self.cfg.model.hidden_dim
+        if hasattr(self.cfg.model, 'num_classes'):
+            kwargs['num_classes'] = self.cfg.model.num_classes
+        if hasattr(self.cfg.model, 'encoder_weights'):
+            if self.cfg.model.encoder_weights == 'None':
                 encoder_weights = None
             else:
                 encoder_weights = self.cfg.model.encoder_weights
-            kwargs["encoder_weights"] = encoder_weights
+            kwargs['encoder_weights'] = encoder_weights
         self.model = build_model(self.cfg.model.name, **kwargs).to(self.device)
 
     def _init_loaders(self):
-        if self.cfg.data.dataset == "mnist":
-            dataset_dir = os.path.join(PROJECT_ROOT, self.cfg.runner.dataset_dir)
-            print (dataset_dir)
+        if self.cfg.data.dataset == 'mnist':
+            dataset_dir = os.path.join(PROJECT_ROOT,
+                                       self.cfg.runner.dataset_dir)
+            print(dataset_dir)
 
             # ToDo build_transforms by cfg
             main_transform = transforms.Compose([
                 transforms.ToTensor(),
-                transforms.Normalize((0.1307,), (0.3081,))
+                transforms.Normalize((0.1307, ), (0.3081, ))
             ])
 
             train_transform = transforms.Compose([
                 transforms.RandomHorizontalFlip(),
                 transforms.ToTensor(),
-                transforms.Normalize((0.1307,), (0.3081,))
+                transforms.Normalize((0.1307, ), (0.3081, ))
             ])
 
-            trainset = torchvision.datasets.MNIST(root=dataset_dir, train=True,
-                                                  download=False, transform=train_transform)
-            testset = torchvision.datasets.MNIST(root=dataset_dir, train=False,
-                                                 download=False, transform=main_transform)
+            trainset = torchvision.datasets.MNIST(root=dataset_dir,
+                                                  train=True,
+                                                  download=False,
+                                                  transform=train_transform)
+            testset = torchvision.datasets.MNIST(root=dataset_dir,
+                                                 train=False,
+                                                 download=False,
+                                                 transform=main_transform)
 
-            trainloader = DataLoader(trainset, batch_size=self.cfg.runner.batch_size, shuffle=True)
-            valloader = DataLoader(testset, batch_size=self.cfg.inference.batch_size, shuffle=False)
+            trainloader = DataLoader(trainset,
+                                     batch_size=self.cfg.runner.batch_size,
+                                     shuffle=True)
+            valloader = DataLoader(testset,
+                                   batch_size=self.cfg.inference.batch_size,
+                                   shuffle=False)
 
             self.loaders = {
                 'train': trainloader,
                 'valid': valloader,
-                'test': valloader, # ToDo make test set
+                'test': valloader,  # ToDo make test set
             }
         else:
             raise NotImplementedError
@@ -84,8 +92,13 @@ class SimpleRunner:
     def train(self):
         since = time.time()
         best_model_wts = copy.deepcopy(self.model.state_dict())
-        best_metric = 0.0
-        os.makedirs(os.path.join(PROJECT_ROOT, self.cfg.runner.logdir, 'checkpoints'), exist_ok=True)
+        if self.cfg.model.name == 'autoencoder':
+            best_metric = -math.inf
+        else:
+            best_metric = 0.0
+        os.makedirs(os.path.join(PROJECT_ROOT, self.cfg.runner.logdir,
+                                 'checkpoints'),
+                    exist_ok=True)
         num_epochs = self.cfg.runner.num_epochs
 
         for epoch in range(num_epochs):
@@ -112,9 +125,9 @@ class SimpleRunner:
                         outputs = self.model(inputs)
                         _, predicted = torch.max(outputs.data, 1)
 
-                        if self.cfg.model.autoencoder:
+                        if self.cfg.model.name == 'autoencoder':
                             loss = self.criterion(outputs, inputs)
-                            metric = -loss.item()
+                            metric = -loss.item() * inputs.size(0)
                         else:
                             loss = self.criterion(outputs, labels)
                             metric = (predicted == labels).sum().item()
@@ -128,9 +141,11 @@ class SimpleRunner:
                     running_metric += metric
 
                 epoch_loss = running_loss / len(self.loaders[phase].dataset)
-                epoch_metric = running_metric / len(self.loaders[phase].dataset)
+                epoch_metric = running_metric / len(
+                    self.loaders[phase].dataset)
 
-                print('{} Loss: {:.4f} Metric(MSE or Acc): {:.4f}'.format(phase, epoch_loss, epoch_metric))
+                print('{} Loss: {:.4f} Metric(MSE or Acc): {:.4f}'.format(
+                    phase, epoch_loss, epoch_metric))
 
                 # deep copy the model
                 if phase == 'valid':
