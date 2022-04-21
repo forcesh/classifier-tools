@@ -1,0 +1,3 @@
+torch==1.11.0+cu113
+hydra-core==1.1.1
+lxml

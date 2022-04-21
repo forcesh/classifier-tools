@@ -1,0 +1,36 @@
+data:
+  dataset: mnist
+  transforms:
+    main:
+      - Normalize
+      - ToTensorV2
+    strong:
+      strong:
+        - GridDistortion:
+            - num_steps: 4
+            - p: 0.75
+        - Flip
+        - p: 1.0
+
+model:
+  name: autoencoder
+  input_dim: 784
+  hidden_dim: 128 # ToTune
+
+loss: mse
+
+
+optimizer:
+  name: Adam
+  lr: 0.001
+
+runner:
+  dataset_dir: "data/MNIST"
+  batch_size: 32
+  logdir: "logs/autoencoder/"
+  num_epochs: 100
+  device: "cuda"
+
+inference:
+  batch_size: 4
+  weights: "logs/autoencoder/best_weights.pth"
