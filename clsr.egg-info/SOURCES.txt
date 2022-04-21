@@ -1,8 +1,0 @@
-README.md
-setup.py
-clsr/__init__.py
-clsr/settings.py
-clsr.egg-info/PKG-INFO
-clsr.egg-info/SOURCES.txt
-clsr.egg-info/dependency_links.txt
-clsr.egg-info/top_level.txt
