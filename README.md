@@ -68,3 +68,16 @@ mse: 0.5150
    macro avg       0.97      0.97      0.97     10000
 weighted avg       0.97      0.97      0.97     10000
 ```
+
+### TODO:
+1. Make depth and number of hidden_dim for each layer configurable
+2. Higher value of hidden dim means more chance for overfitting as we have more features.
+So we should use regularization technics:
+l1, l2 regularization and dropout
+3. Use conv2d (conv_transpose2d for decoder), batch norm, more interesting activations
+4. Use more advanced autoencoders like SparseAE, Denoising AE, VAE
+5. Make augmentations configurable and try AutoAugmentation to find the best transforms
+6. Model interpretation methods like GradCAM
+7. Hyperparameters search (added hydra and configs for this purpose)
+8. Visualize errors
+9. Docker:)
