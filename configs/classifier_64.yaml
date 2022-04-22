@@ -8,6 +8,7 @@ model:
   num_classes: 10
   encoder_weights: "logs/autoencoder_64/checkpoints/best_weights.pth"
   weigths: None
+  freeze_encoder: True
 
 loss: ce
 

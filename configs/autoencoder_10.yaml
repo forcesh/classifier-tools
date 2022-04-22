@@ -1,0 +1,26 @@
+data:
+  dataset: mnist
+
+model:
+  name: autoencoder
+  input_dim: 784
+  hidden_dim: 10
+  weigths: None
+
+loss: mse
+
+
+optimizer:
+  name: Adam
+  lr: 0.001
+
+runner:
+  dataset_dir: "data/MNIST"
+  batch_size: 32
+  logdir: "logs/autoencoder_10/"
+  num_epochs: 100
+  device: "cuda"
+
+inference:
+  batch_size: 4
+  weights: "logs/autoencoder_10/checkpoints/best_weights.pth"

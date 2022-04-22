@@ -29,7 +29,8 @@ class SimpleRunner:
         self.optimizer = None
         if self.mode == 0:
             self.optimizer = build_optimizer(cfg.optimizer.name,
-                                             self.model.parameters(),
+                                             filter(lambda p: p.requires_grad,
+                                                    self.model.parameters()),
                                              lr=cfg.optimizer.lr)
 
     def _init_model(self):
@@ -196,8 +197,6 @@ class SimpleRunner:
                 outputs = self.model(inputs)
                 loss = self.criterion(outputs, inputs)
                 running_loss += loss.item() * inputs.size(0)
-                if i == 0:
-                    self.save_examples(inputs, outputs)
         mse = running_loss / len(self.loaders['test'].dataset)
         return -mse
 

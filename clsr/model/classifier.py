@@ -12,9 +12,13 @@ class Classifier(nn.Module):
                  hidden_dim,
                  num_classes,
                  encoder_weights=None,
+                 freeze_encoder=True,
                  **kwargs):
         super().__init__()
         self.encoder = Encoder(input_dim, hidden_dim)
+        if freeze_encoder:
+            for n, p in self.encoder.named_parameters():
+                p.requires_grad = False
         self.cls_head = nn.Linear(in_features=hidden_dim,
                                   out_features=num_classes)
 

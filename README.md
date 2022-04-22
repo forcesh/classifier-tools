@@ -44,30 +44,22 @@ python tools/test.py --config-name="classifier.yaml"
 ```
 
 ### Results:
-```
-hidden_dim: 128
-```
-```
-mse: 0.5150
-```
-```
-              precision    recall  f1-score   support
+| Model                                          | F1 score    |
+|------------------------------------------------|-------------|
+| hidden_dim: 128 (pretrain; no freezed encoder) | 0.9688 |
+| hidden_dim: 128 (pretrain; freezed encoder)    | 0.8361 |
+| **hidden_dim: 128 (no pretrain)**                  | **0.9738** |
+| **hidden_dim: 64 (pretrain; no freezed encoder)**  | **0.9641** |
+| hidden_dim: 64 (pretrain; freezed encoder)     | 0.8322 |
+| hidden_dim: 64 (no pretrain)                   | 0.6731 |
+| **hidden_dim: 10 (pretrain; no freezed encoder)**  | **0.7101** |
+| hidden_dim: 10 (pretrain; freezed encoder)     | 0.7101 |
+| hidden_dim: 10 (no pretrain)                   | 0.3796 |
 
-           0       0.98      0.99      0.98       980
-           1       0.99      0.99      0.99      1135
-           2       0.96      0.97      0.96      1032
-           3       0.96      0.96      0.96      1010
-           4       0.96      0.99      0.97       982
-           5       0.97      0.94      0.95       892
-           6       0.97      0.98      0.98       958
-           7       0.97      0.97      0.97      1028
-           8       0.96      0.97      0.96       974
-           9       0.97      0.94      0.96      1009
 
-    accuracy                           0.97     10000
-   macro avg       0.97      0.97      0.97     10000
-weighted avg       0.97      0.97      0.97     10000
-```
+### Conclusions:
+Model without pretraining and with hidden_dim=128 shows the best results. But other configurations with hidden_dim=64
+and 10 pretrained weights improves f1 score. For futher improvements we need to use more complex architectures.
 
 ### TODO:
 1. Make depth and number of hidden_dim for each layer configurable

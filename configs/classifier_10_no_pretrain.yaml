@@ -4,11 +4,11 @@ data:
 model:
   name: classifier
   input_dim: 784
-  hidden_dim: 128
+  hidden_dim: 10
   num_classes: 10
-  encoder_weights: "logs/autoencoder_exp1/checkpoints/best_weights.pth"
+  encoder_weights: None
   weigths: None
-  freeze_encoder: True
+  freeze_encoder: False
 
 loss: ce
 
@@ -19,10 +19,10 @@ optimizer:
 runner:
   dataset_dir: "data/MNIST"
   batch_size: 32
-  logdir: "logs/classifer/"
+  logdir: "logs/classifer_10_no_pretrain/"
   num_epochs: 100
   device: "cuda"
 
 inference:
   batch_size: 4
-  weights: "logs/classifer/checkpoints/best_weights.pth"
+  weights: "logs/classifer_10_no_pretrain/checkpoints/best_weights.pth"
