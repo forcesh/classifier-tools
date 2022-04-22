@@ -15,9 +15,10 @@ data:
 model:
   name: classifier
   input_dim: 784
-  hidden_dim: 128 # ToTune
+  hidden_dim: 128
   num_classes: 10
-  encoder_weights: "logs/autoencoder/best_weights.pth"
+  encoder_weights: "logs/autoencoder_exp1/checkpoints/best_weights.pth"
+  weigths: None
 
 loss: ce
 
@@ -34,4 +35,4 @@ runner:
 
 inference:
   batch_size: 4
-  weights: "logs/autoencoder/best_weights.pth"
+  weights: "logs/classifer/checkpoints/best_weights.pth"

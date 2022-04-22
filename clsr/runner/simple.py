@@ -7,6 +7,7 @@ import torch
 import torchvision
 import torchvision.transforms as transforms
 from omegaconf import DictConfig
+from sklearn.metrics import classification_report
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
@@ -40,18 +41,33 @@ class SimpleRunner:
         if hasattr(self.cfg.model, 'num_classes'):
             kwargs['num_classes'] = self.cfg.model.num_classes
         if hasattr(self.cfg.model, 'encoder_weights'):
-            if self.cfg.model.encoder_weights == 'None':
-                encoder_weights = None
+            if self.cfg.model.encoder_weights == 'None' or self.mode != 0:
+                pass
             else:
                 encoder_weights = self.cfg.model.encoder_weights
-            kwargs['encoder_weights'] = encoder_weights
+                kwargs['encoder_weights'] = os.path.join(
+                    PROJECT_ROOT, encoder_weights)
         self.model = build_model(self.cfg.model.name, **kwargs).to(self.device)
+
+        if self.mode == 1:
+            weights_path = os.path.join(PROJECT_ROOT,
+                                        self.cfg.inference.weights)
+            checkpoint = torch.load(weights_path)
+            self.model.load_state_dict(checkpoint)
+            print(weights_path, 'weights loaded')
+        else:
+            if hasattr(self.cfg.model, 'weights'):
+                weights_path = os.path.join(PROJECT_ROOT,
+                                            self.cfg.inference.weights)
+                if os.path.exist(weights_path):
+                    checkpoint = torch.load(weights_path)
+                    self.model.load_state_dict(checkpoint)
+                    print(weights_path, 'weights loaded')
 
     def _init_loaders(self):
         if self.cfg.data.dataset == 'mnist':
             dataset_dir = os.path.join(PROJECT_ROOT,
                                        self.cfg.runner.dataset_dir)
-            print(dataset_dir)
 
             # ToDo build_transforms by cfg
             main_transform = transforms.Compose([
@@ -118,6 +134,7 @@ class SimpleRunner:
                 for batch in tqdm(self.loaders[phase]):
                     inputs, labels = batch
                     inputs = inputs.to(self.device)
+                    labels = labels.to(self.device)
 
                     self.optimizer.zero_grad()
 
@@ -172,24 +189,29 @@ class SimpleRunner:
     def test(self):
         self.model.eval()
 
+        # for classifier
         gt_labels = []
         pred_labels = []
+        # for autoencoder
         running_loss = 0.0
 
-        for batch in tqdm(self.loaders['test']):
+        for i, batch in enumerate(tqdm(self.loaders['test'])):
             inputs, labels = batch
             inputs = inputs.to(self.device)
 
-            self.optimizer.zero_grad()
-
             with torch.inference_mode():
                 outputs = self.model(inputs)
-                if self.cfg.model.autoencoder:
+
+                if self.cfg.model.name == 'autoencoder':
                     loss = self.criterion(outputs, inputs)
                     running_loss += loss.item() * inputs.size(0)
                 else:
                     _, predicted = torch.max(outputs.data, 1)
-                    gt_labels.append(gt_labels)
-                    pred_labels.append(predicted)
+                    gt_labels.extend(labels.cpu().numpy().tolist())
+                    pred_labels.extend(predicted.cpu().numpy().tolist())
 
-        # ToDo
+        if self.cfg.model.name == 'autoencoder':
+            print('mse: {:.4f}'.format(running_loss /
+                                       len(self.loaders['test'].dataset)))
+        else:
+            print(classification_report(gt_labels, pred_labels))

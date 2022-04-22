@@ -15,7 +15,8 @@ data:
 model:
   name: autoencoder
   input_dim: 784
-  hidden_dim: 128 # ToTune
+  hidden_dim: 128
+  weigths: None
 
 loss: mse
 
@@ -33,4 +34,4 @@ runner:
 
 inference:
   batch_size: 4
-  weights: "logs/autoencoder/best_weights.pth"
+  weights: "logs/autoencoder/checkpoints/best_weights.pth"
