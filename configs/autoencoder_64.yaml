@@ -4,7 +4,7 @@ data:
 model:
   name: autoencoder
   input_dim: 784
-  hidden_dim: 128
+  hidden_dim: 64
   weigths: None
 
 loss: mse
@@ -17,10 +17,10 @@ optimizer:
 runner:
   dataset_dir: "data/MNIST"
   batch_size: 32
-  logdir: "logs/autoencoder/"
+  logdir: "logs/autoencoder_64/"
   num_epochs: 100
   device: "cuda"
 
 inference:
   batch_size: 4
-  weights: "logs/autoencoder_exp1/checkpoints/best_weights.pth"
+  weights: "logs/autoencoder_64/checkpoints/best_weights.pth"

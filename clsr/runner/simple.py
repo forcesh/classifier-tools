@@ -7,7 +7,7 @@ import torch
 import torchvision
 import torchvision.transforms as transforms
 from omegaconf import DictConfig
-from sklearn.metrics import classification_report
+from sklearn.metrics import classification_report, f1_score
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
@@ -186,14 +186,24 @@ class SimpleRunner:
 
         return best_metric
 
-    def test(self):
-        self.model.eval()
+    def test_autoencoder(self):
+        running_loss = 0.0
+        for i, batch in enumerate(tqdm(self.loaders['test'])):
+            inputs, labels = batch
+            inputs = inputs.to(self.device)
 
-        # for classifier
+            with torch.inference_mode():
+                outputs = self.model(inputs)
+                loss = self.criterion(outputs, inputs)
+                running_loss += loss.item() * inputs.size(0)
+                if i == 0:
+                    self.save_examples(inputs, outputs)
+        mse = running_loss / len(self.loaders['test'].dataset)
+        return -mse
+
+    def test_classifier(self):
         gt_labels = []
         pred_labels = []
-        # for autoencoder
-        running_loss = 0.0
 
         for i, batch in enumerate(tqdm(self.loaders['test'])):
             inputs, labels = batch
@@ -201,17 +211,19 @@ class SimpleRunner:
 
             with torch.inference_mode():
                 outputs = self.model(inputs)
+                _, predicted = torch.max(outputs.data, 1)
+                gt_labels.extend(labels.cpu().numpy().tolist())
+                pred_labels.extend(predicted.cpu().numpy().tolist())
 
-                if self.cfg.model.name == 'autoencoder':
-                    loss = self.criterion(outputs, inputs)
-                    running_loss += loss.item() * inputs.size(0)
-                else:
-                    _, predicted = torch.max(outputs.data, 1)
-                    gt_labels.extend(labels.cpu().numpy().tolist())
-                    pred_labels.extend(predicted.cpu().numpy().tolist())
+        print(classification_report(gt_labels, pred_labels))
+        return f1_score(gt_labels, pred_labels, average='micro')
 
+    def test(self):
+        self.model.eval()
         if self.cfg.model.name == 'autoencoder':
-            print('mse: {:.4f}'.format(running_loss /
-                                       len(self.loaders['test'].dataset)))
+            metric = self.test_autoencoder()
+            print('mse: {:.4f}'.format(-metric))
         else:
-            print(classification_report(gt_labels, pred_labels))
+            metric = self.test_classifier()
+            print('f1_score: {:.4f}'.format(metric))
+        return metric

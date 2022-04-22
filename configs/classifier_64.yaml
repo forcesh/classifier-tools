@@ -4,9 +4,9 @@ data:
 model:
   name: classifier
   input_dim: 784
-  hidden_dim: 128
+  hidden_dim: 64
   num_classes: 10
-  encoder_weights: "logs/autoencoder_exp1/checkpoints/best_weights.pth"
+  encoder_weights: "logs/autoencoder_64/checkpoints/best_weights.pth"
   weigths: None
 
 loss: ce
@@ -18,10 +18,10 @@ optimizer:
 runner:
   dataset_dir: "data/MNIST"
   batch_size: 32
-  logdir: "logs/classifer/"
+  logdir: "logs/classifer_64/"
   num_epochs: 100
   device: "cuda"
 
 inference:
   batch_size: 4
-  weights: "logs/classifer_exp1/checkpoints/best_weights.pth"
+  weights: "logs/classifer_64/checkpoints/best_weights.pth"
